@@ -1,6 +1,6 @@
+#include "pch.h"
 #include "fun.h"
 
-using namespace std;
 
 double g_height=600.0, g_width=1200.0;
 vector<sf::Vector2<double>> att_point;
@@ -11,7 +11,7 @@ Obj::Obj()
 	_c.x=get_random(_r,(g_width-_r));
 	_c.y=get_random(_r,(g_height-_r));
 
-	_c.m=get_random((5*_r)*1000,100000);
+	_m=get_random((100*_r),(1000*_r));
 
 	if(get_random(-1,1)>0)
 		_c.vx=get_random(-10,-1);
@@ -28,18 +28,32 @@ Obj::Obj()
 }
 void Obj::draw(sf::RenderWindow &windowRef)
 {
+	double dt=0.06;
 
 	for(size_t i=0; i<att_point.size(); i++)
 	{
+		//punkty przyciągania
 		double x_p=att_point[i].x;
 		double y_p=att_point[i].y;
-		double F = get_d(x_p,y_p, _c.x, _c.y);
-	    double a = F/_c.m;
 
-		_c.vx+=a;
-		_c.vy+=a;
-		_c.vx+=(x_p - _c.x) / F;
-		_c.vy+=(y_p - _c.y) / F;
+		//siła F=1/(d-2)
+		double F =  1 / (get_d(x_p,y_p, _c.x, _c.y)-2);
+
+		//kierunki działania sił
+		double F_x=(x_p-_c.x),
+			   F_y=(y_p-_c.y);
+
+		//siła na obie wsp
+		F_x=F_x*F;
+		F_y=F_y*F;
+
+		//przyspieszenie
+		double a_x = F_x / _m,
+			   a_y = F_y / _m;
+
+		//finalna predkosc z przyspieszeniem i sila
+		_c.vx +=a_x+ F_x;
+		_c.vy +=a_y+ F_y;
 	}
 
 	if(_c.x+_c.vx>=g_width-_r || _c.x+_c.vx<=_r )
@@ -47,8 +61,8 @@ void Obj::draw(sf::RenderWindow &windowRef)
 	if(_c.y+_c.vy>=g_height-_r || _c.y+_c.vy<=_r )
 		_c.vy*=-1;
 
-	_c.x += (_c.vx/10);
-    _c.y += (_c.vy/10);
+	_c.x += _c.vx *dt;
+    _c.y += _c.vy *dt;
 
 	shape.setPosition(_c.x,_c.y);
 	windowRef.draw(shape);
